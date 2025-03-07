@@ -264,3 +264,37 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
     }
     return renderCommands;
 }
+
+Clay_RenderCommandArray Learning_CreateLayout(ClayVideoDemo_Data *data) {
+    data->frameArena.offset = 0;
+
+    Clay_BeginLayout();
+
+    CLAY(
+        {.id = CLAY_ID("OuterContainer"),
+         .layout =
+             {.sizing = {CLAY_SIZING_FIXED(120), CLAY_SIZING_FIXED(120)},
+              .padding = CLAY_PADDING_ALL(16),
+              .childGap = 16,
+              .childAlignment = {
+                     .x = CLAY_ALIGN_X_LEFT,
+                     .y = CLAY_ALIGN_Y_CENTER
+             }},
+         .backgroundColor = {250, 250, 255, 255}})
+    {
+            CLAY(
+                {.id = CLAY_ID("MainContent"),
+                 .layout =
+                     {.sizing = {.width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60)}},
+                 .backgroundColor = (Clay_Color){255, 0, 255, 255},
+                 .cornerRadius = CLAY_CORNER_RADIUS(10)})
+            {
+            }
+    }
+
+    Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+    for (int32_t i = 0; i < renderCommands.length; i++) {
+        Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += data->yOffset;
+    }
+    return renderCommands;
+}

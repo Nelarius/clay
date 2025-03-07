@@ -106,7 +106,11 @@ int main(int argc, char *argv[]) {
         SDL_GetWindowSize(window, &windowWidth, &windowHeight);
         Clay_SetLayoutDimensions((Clay_Dimensions) { (float)windowWidth, (float)windowHeight });
 
-        Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demoData);
+        #if 1
+            Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demoData);
+        #else
+            Clay_RenderCommandArray renderCommands = Learning_CreateLayout(&demoData);
+        #endif
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
