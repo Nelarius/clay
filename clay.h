@@ -184,7 +184,7 @@ extern "C" {
 
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
-typedef struct {
+typedef struct Clay_String {
     int32_t length;
     // The underlying character memory. Note: this will not be copied and will not extend the lifetime of the underlying memory.
     const char *chars;
@@ -192,7 +192,7 @@ typedef struct {
 
 // Clay_StringSlice is used to represent non owning string slices, and includes
 // a baseChars field which points to the string this slice is derived from.
-typedef struct {
+typedef struct Clay_StringSlice {
     int32_t length;
     const char *chars;
     const char *baseChars; // The source string / char* that this slice was derived from
@@ -202,33 +202,33 @@ typedef struct Clay_Context Clay_Context;
 
 // Clay_Arena is a memory arena structure that is used by clay to manage its internal allocations.
 // Rather than creating it by hand, it's easier to use Clay_CreateArenaWithCapacityAndMemory()
-typedef struct {
+typedef struct Clay_Arena {
     uintptr_t nextAllocation;
     size_t capacity;
     char *memory;
 } Clay_Arena;
 
-typedef struct {
+typedef struct Clay_Dimensions {
     float width, height;
 } Clay_Dimensions;
 
-typedef struct {
+typedef struct Clay_Vector2 {
     float x, y;
 } Clay_Vector2;
 
 // Internally clay conventionally represents colors as 0-255, but interpretation is up to the renderer.
-typedef struct {
+typedef struct Clay_Color {
     float r, g, b, a;
 } Clay_Color;
 
-typedef struct {
+typedef struct Clay_BoundingBox {
     float x, y, width, height;
 } Clay_BoundingBox;
 
 // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
 // Represents a hashed string ID used for identifying and finding specific clay UI elements, required
 // by functions such as Clay_PointerOver() and Clay_GetElementData().
-typedef struct {
+typedef struct Clay_ElementId {
     uint32_t id; // The resulting hash generated from the other fields.
     uint32_t offset; // A numerical offset applied after computing the hash from stringId.
     uint32_t baseId; // A base hash value to start from, for example the parent element ID is used when calculating CLAY_ID_LOCAL().
@@ -237,7 +237,7 @@ typedef struct {
 
 // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
 // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
-typedef struct {
+typedef struct Clay_CornerRadius {
     float topLeft;
     float topRight;
     float bottomLeft;
@@ -247,7 +247,7 @@ typedef struct {
 // Element Configs ---------------------------
 
 // Controls the direction in which child elements will be automatically laid out.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_LayoutDirection {
     // (Default) Lays out child elements from left to right with increasing x.
     CLAY_LEFT_TO_RIGHT,
     // Lays out child elements from top to bottom with increasing y.
@@ -255,7 +255,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_LayoutDirection;
 
 // Controls the alignment along the x axis (horizontal) of child elements.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_LayoutAlignmentX {
     // (Default) Aligns child elements to the left hand side of this element, offset by padding.width.left
     CLAY_ALIGN_X_LEFT,
     // Aligns child elements to the right hand side of this element, offset by padding.width.right
@@ -265,7 +265,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_LayoutAlignmentX;
 
 // Controls the alignment along the y axis (vertical) of child elements.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_LayoutAlignmentY {
     // (Default) Aligns child elements to the top of this element, offset by padding.width.top
     CLAY_ALIGN_Y_TOP,
     // Aligns child elements to the bottom of this element, offset by padding.width.bottom
@@ -275,7 +275,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_LayoutAlignmentY;
 
 // Controls how the element takes up space inside its parent container.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay__SizingType {
     // (default) Wraps tightly to the size of the element's contents.
     CLAY__SIZING_TYPE_FIT,
     // Expands along this axis to fill available space in the parent element, sharing it with other GROW elements.
@@ -287,20 +287,20 @@ typedef CLAY_PACKED_ENUM {
 } Clay__SizingType;
 
 // Controls how child elements are aligned on each axis.
-typedef struct {
+typedef struct Clay_ChildAlignment {
     Clay_LayoutAlignmentX x; // Controls alignment of children along the x axis.
     Clay_LayoutAlignmentY y; // Controls alignment of children along the y axis.
 } Clay_ChildAlignment;
 
 // Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to,
 // overriding sizing types such as FIT or GROW.
-typedef struct {
+typedef struct Clay_SizingMinMax {
     float min; // The smallest final size of the element on this axis will be this value in pixels.
     float max; // The largest final size of the element on this axis will be this value in pixels.
 } Clay_SizingMinMax;
 
 // Controls the sizing of this element along one axis inside its parent container.
-typedef struct {
+typedef struct Clay_SizingAxis {
     union {
         Clay_SizingMinMax minMax; // Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to, overriding sizing types such as FIT or GROW.
         float percent; // Expects 0-1 range. Clamps the axis size to a percent of the parent container's axis size minus padding and child gaps.
@@ -309,14 +309,14 @@ typedef struct {
 } Clay_SizingAxis;
 
 // Controls the sizing of this element along one axis inside its parent container.
-typedef struct {
+typedef struct Clay_Sizing {
     Clay_SizingAxis width; // Controls the width sizing of the element, along the x axis.
     Clay_SizingAxis height;  // Controls the height sizing of the element, along the y axis.
 } Clay_Sizing;
 
 // Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children
 // will be placed.
-typedef struct {
+typedef struct Clay_Padding {
     uint16_t left;
     uint16_t right;
     uint16_t top;
@@ -327,7 +327,7 @@ CLAY__WRAPPER_STRUCT(Clay_Padding);
 
 // Controls various settings that affect the size and position of an element, as well as the sizes and positions
 // of any child elements.
-typedef struct {
+typedef struct Clay_LayoutConfig {
     Clay_Sizing sizing; // Controls the sizing of this element inside it's parent container, including FIT, GROW, PERCENT and FIXED sizing.
     Clay_Padding padding; // Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children will be placed.
     uint16_t childGap; // Controls the gap in pixels between child elements along the layout axis (horizontal gap for LEFT_TO_RIGHT, vertical gap for TOP_TO_BOTTOM).
@@ -340,7 +340,7 @@ CLAY__WRAPPER_STRUCT(Clay_LayoutConfig);
 extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
 
 // Controls how text "wraps", that is how it is broken into multiple lines when there is insufficient horizontal space.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_TextElementConfigWrapMode {
     // (default) breaks on whitespace characters.
     CLAY_TEXT_WRAP_WORDS,
     // Don't break on space characters, only on newlines.
@@ -350,7 +350,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_TextElementConfigWrapMode;
 
 // Controls how wrapped lines of text are horizontally aligned within the outer text bounding box.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_TextAlignment {
     // (default) Horizontally aligns wrapped lines of text to the left hand side of their bounding box.
     CLAY_TEXT_ALIGN_LEFT,
     // Horizontally aligns wrapped lines of text to the center of their bounding box.
@@ -360,7 +360,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_TextAlignment;
 
 // Controls various functionality related to text elements.
-typedef struct {
+typedef struct Clay_TextElementConfig {
     // A pointer that will be transparently passed through to the resulting render command.
     void *userData;
     // The RGBA color of the font to render, conventionally specified as 0-255.
@@ -406,7 +406,7 @@ CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
 
 // Controls where a floating element is offset relative to its parent element.
 // Note: see https://github.com/user-attachments/assets/b8c6dfaa-c1b1-41a4-be55-013473e4a6ce for a visual explanation.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_FloatingAttachPointType {
     CLAY_ATTACH_POINT_LEFT_TOP,
     CLAY_ATTACH_POINT_LEFT_CENTER,
     CLAY_ATTACH_POINT_LEFT_BOTTOM,
@@ -419,13 +419,13 @@ typedef CLAY_PACKED_ENUM {
 } Clay_FloatingAttachPointType;
 
 // Controls where a floating element is offset relative to its parent element.
-typedef struct {
+typedef struct Clay_FloatingAttachPoints {
     Clay_FloatingAttachPointType element; // Controls the origin point on a floating element that attaches to its parent.
     Clay_FloatingAttachPointType parent; // Controls the origin point on the parent element that the floating element attaches to.
 } Clay_FloatingAttachPoints;
 
 // Controls how mouse pointer events like hover and click are captured or passed through to elements underneath a floating element.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_PointerCaptureMode {
     // (default) "Capture" the pointer event and don't allow events like hover and click to pass through to elements underneath.
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
     //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
@@ -435,7 +435,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_PointerCaptureMode;
 
 // Controls which element a floating element is "attached" to (i.e. relative offset from).
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_FloatingAttachToElement {
     // (default) Disables floating for this element.
     CLAY_ATTACH_TO_NONE,
     // Attaches this floating element to its parent, positioned based on the .attachPoints and .offset fields.
@@ -448,7 +448,7 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls various settings related to "floating" elements, which are elements that "float" above other elements, potentially overlapping their boundaries,
 // and not affecting the layout of sibling or parent elements.
-typedef struct {
+typedef struct Clay_FloatingElementConfig {
     // Offsets this floating element by the provided x,y coordinates from its attachPoints.
     Clay_Vector2 offset;
     // Expands the boundaries of the outer floating element without affecting its children.
@@ -481,7 +481,7 @@ CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 // Custom -----------------------------
 
 // Controls various settings related to custom elements.
-typedef struct {
+typedef struct Clay_CustomElementConfig {
     // A transparent pointer through which you can pass custom data to the renderer.
     // Generates CUSTOM render commands.
     void* customData;
@@ -492,7 +492,7 @@ CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
 // Scroll -----------------------------
 
 // Controls the axis on which an element switches to "scrolling", which clips the contents and allows scrolling in that direction.
-typedef struct {
+typedef struct Clay_ScrollElementConfig {
     bool horizontal; // Clip overflowing elements on the X axis and allow scrolling left and right.
     bool vertical; // Clip overflowing elements on the YU axis and allow scrolling up and down.
 } Clay_ScrollElementConfig;
@@ -502,7 +502,7 @@ CLAY__WRAPPER_STRUCT(Clay_ScrollElementConfig);
 // Border -----------------------------
 
 // Controls the widths of individual element borders.
-typedef struct {
+typedef struct Clay_BorderWidth {
     uint16_t left;
     uint16_t right;
     uint16_t top;
@@ -514,7 +514,7 @@ typedef struct {
 } Clay_BorderWidth;
 
 // Controls settings related to element borders.
-typedef struct {
+typedef struct Clay_BorderElementConfig {
     Clay_Color color; // Controls the color of all borders with width > 0. Conventionally represented as 0-255, but interpretation is up to the renderer.
     Clay_BorderWidth width; // Controls the widths of individual borders. At least one of these should be > 0 for a BORDER render command to be generated.
 } Clay_BorderElementConfig;
@@ -524,7 +524,7 @@ CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 // Render Command Data -----------------------------
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
-typedef struct {
+typedef struct Clay_TextRenderData {
     // A string slice containing the text to be rendered.
     // Note: this is not guaranteed to be null terminated.
     Clay_StringSlice stringContents;
@@ -540,7 +540,7 @@ typedef struct {
 } Clay_TextRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
-typedef struct {
+typedef struct Clay_RectangleRenderData {
     // The solid background color to fill this rectangle with. Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
     // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
@@ -549,7 +549,7 @@ typedef struct {
 } Clay_RectangleRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE
-typedef struct {
+typedef struct Clay_ImageRenderData {
     // The tint color for this image. Note that the default value is 0,0,0,0 and should likely be interpreted
     // as "untinted".
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
@@ -564,7 +564,7 @@ typedef struct {
 } Clay_ImageRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
-typedef struct {
+typedef struct Clay_CustomRenderData {
     // Passed through from .backgroundColor in the original element declaration.
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
@@ -576,13 +576,13 @@ typedef struct {
 } Clay_CustomRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-typedef struct {
+typedef struct Clay_ScrollRenderData {
     bool horizontal;
     bool vertical;
 } Clay_ScrollRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_BORDER
-typedef struct {
+typedef struct Clay_BorderRenderData {
     // Controls a shared color for all this element's borders.
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color color;
@@ -594,7 +594,7 @@ typedef struct {
 } Clay_BorderRenderData;
 
 // A struct union containing data specific to this command's .commandType
-typedef union {
+typedef union Clay_RenderData {
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
     Clay_RectangleRenderData rectangle;
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
@@ -612,7 +612,7 @@ typedef union {
 // Miscellaneous Structs & Enums ---------------------------------
 
 // Data representing the current internal state of a scrolling element.
-typedef struct {
+typedef struct Clay_ScrollContainerData {
     // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
     // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
     Clay_Vector2 *scrollPosition;
@@ -627,7 +627,7 @@ typedef struct {
 } Clay_ScrollContainerData;
 
 // Bounding box and other data for a specific UI element.
-typedef struct {
+typedef struct Clay_ElementData {
     // The rectangle that encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
     // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
@@ -635,7 +635,7 @@ typedef struct {
 } Clay_ElementData;
 
 // Used by renderers to determine specific handling for each render command.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_RenderCommandType {
     // This command type should be skipped.
     CLAY_RENDER_COMMAND_TYPE_NONE,
     // The renderer should draw a solid color rectangle.
@@ -654,7 +654,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 } Clay_RenderCommandType;
 
-typedef struct {
+typedef struct Clay_RenderCommand {
     // A rectangular box that fully encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
     // A struct union containing data specific to this command's commandType.
@@ -679,7 +679,7 @@ typedef struct {
 } Clay_RenderCommand;
 
 // A sized array of render commands.
-typedef struct {
+typedef struct Clay_RenderCommandArray {
     // The underlying max capacity of the array, not necessarily all initialized.
     int32_t capacity;
     // The number of initialized elements in this array. Used for loops and iteration.
@@ -689,7 +689,7 @@ typedef struct {
 } Clay_RenderCommandArray;
 
 // Represents the current state of interaction with clay this frame.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_PointerDataInteractionState {
     // A left mouse click, or touch occurred this frame.
     CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
     // The left mouse button click or touch happened at some point in the past, and is still currently held down this frame.
@@ -701,7 +701,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_PointerDataInteractionState;
 
 // Information on the current state of pointer interactions this frame.
-typedef struct {
+typedef struct Clay_PointerData {
     // The position of the mouse / touch / pointer relative to the root of the layout.
     Clay_Vector2 position;
     // Represents the current state of interaction with clay this frame.
@@ -712,7 +712,7 @@ typedef struct {
     Clay_PointerDataInteractionState state;
 } Clay_PointerData;
 
-typedef struct {
+typedef struct Clay_ElementDeclaration {
     // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
     // Represents a hashed string ID used for identifying and finding specific clay UI elements, required by functions such as Clay_PointerOver() and Clay_GetElementData().
     Clay_ElementId id;
@@ -742,7 +742,7 @@ typedef struct {
 CLAY__WRAPPER_STRUCT(Clay_ElementDeclaration);
 
 // Represents the type of error clay encountered while computing layout.
-typedef CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM Clay_ErrorType {
     // A text measurement function wasn't provided using Clay_SetMeasureTextFunction(), or the provided function was null.
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     // Clay attempted to allocate its internal data structures but ran out of space.
@@ -763,7 +763,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_ErrorType;
 
 // Data to identify the error that clay has encountered.
-typedef struct {
+typedef struct Clay_ErrorData {
     // Represents the type of error clay encountered while computing layout.
     // CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED - A text measurement function wasn't provided using Clay_SetMeasureTextFunction(), or the provided function was null.
     // CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED - Clay attempted to allocate its internal data structures but ran out of space. The arena passed to Clay_Initialize was created with a capacity smaller than that required by Clay_MinMemorySize().
