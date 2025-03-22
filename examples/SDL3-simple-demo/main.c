@@ -10,6 +10,7 @@
 
 #include "../../renderers/SDL3/clay_renderer_SDL3.c"
 #include "../shared-layouts/clay-video-demo.c"
+#include "../repro.c"
 
 static const Uint32 FONT_ID = 0;
 
@@ -136,7 +137,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *state = appstate;
 
-    Clay_RenderCommandArray render_commands = ClayVideoDemo_CreateLayout(&state->demoData);
+    int w, h;
+    SDL_GetWindowSize(state->window, &w, &h);
+    Clay_RenderCommandArray render_commands = repro_create_layout(w, h);
 
     SDL_SetRenderDrawColor(state->rendererData.renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->rendererData.renderer);
